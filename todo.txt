@@ -1,7 +1,8 @@
 1. (done) Remove extra light/dark mode toggle
 2. (done) Fix pen size
 3. (done) Fix note card layout --> add all options to the drop down
-4. Add right click on home to create new note, new notebooks, or select a note to download as a file
+4. Fix the notecard delete, notebook creation, and note persistance in notebooks
+5. Add right click on home to create new note, new notebooks, or select a note to download as a file
 5. Change pdf and google drive save to direct api calls rather than using LLM
 6. add eraser stroke functionality
 
