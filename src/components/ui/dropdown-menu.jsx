@@ -47,6 +47,35 @@ export function DropdownMenu({ children }) {
 }
 
 export const DropdownMenuTrigger = React.forwardRef(({ children, isOpen, toggleDropdown, ...props }, ref) => {
+  // Check if the child is our Button component or any button element
+  const child = React.Children.only(children);
+  const isButtonChild = React.isValidElement(child) && (
+    child.type === 'button' || 
+    child.type?.displayName === 'Button' ||
+    child.type?.name === 'Button'
+  );
+  
+  if (isButtonChild) {
+    // Filter out non-DOM props that shouldn't be passed to the button element
+    const { closeDropdown, ...domProps } = props;
+    
+    // If child is a button, clone it and add our props
+    return React.cloneElement(child, {
+      ref,
+      onClick: (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleDropdown?.();
+        // Call the original onClick if it exists
+        child.props.onClick?.(e);
+      },
+      'aria-expanded': isOpen,
+      'aria-haspopup': 'true',
+      ...domProps
+    });
+  }
+  
+  // Otherwise, render as a button
   return (
     <button
       ref={ref}
@@ -124,7 +153,7 @@ export function DropdownMenuContent({ children, isOpen, className = '' }) {
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translate(-50%, -5px); }
           to { opacity: 1; transform: translate(-50%, 0); }

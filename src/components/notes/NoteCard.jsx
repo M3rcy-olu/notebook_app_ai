@@ -40,9 +40,17 @@ export default function NoteCard({ note, viewMode, onDelete }) {
     }
   };
 
+  const handleCardClick = (e) => {
+    // Prevent navigation if clicking on dropdown or its children
+    if (e.target.closest('[data-dropdown]')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   if (viewMode === "list") {
     return (
-      <Link to={createPageUrl("Canvas") + `?id=${note.id}`}>
+      <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
         <div className="glass-effect rounded-2xl p-4 floating-element smooth-transition group">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 light-green-bg rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -69,27 +77,29 @@ export default function NoteCard({ note, viewMode, onDelete }) {
                 {note.notebook}
               </Badge>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-100 group-hover:opacity-100 smooth-transition"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="min-w-[120px] z-[1000]">
-                  <DropdownMenuItem 
-                    onSelect={handleDelete}
-                    className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div data-dropdown>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-100 group-hover:opacity-100 smooth-transition"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="min-w-[120px] z-[1000]">
+                    <DropdownMenuItem 
+                      onSelect={handleDelete}
+                      className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>
@@ -98,7 +108,7 @@ export default function NoteCard({ note, viewMode, onDelete }) {
   }
   else {
     return (
-      <Link to={createPageUrl("Canvas") + `?id=${note.id}`}>
+      <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
         <div className="glass-effect rounded-2xl overflow-hidden floating-element smooth-transition group aspect-[3/4] flex flex-col">
           <div className="flex-1 light-green-bg flex items-center justify-center overflow-hidden">
             {note.thumbnail ? (
@@ -115,27 +125,29 @@ export default function NoteCard({ note, viewMode, onDelete }) {
           <div className="p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold truncate flex-1 text-lg" style={{ color: 'var(--text-primary)' }}>{note.title}</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-100 group-hover:opacity-100 smooth-transition -mt-1"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="min-w-[120px] z-[1000]">
-                  <DropdownMenuItem 
-                    onSelect={handleDelete}
-                    className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
+              <div data-dropdown>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-100 group-hover:opacity-100 smooth-transition -mt-1"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="min-w-[120px] z-[1000]">
+                    <DropdownMenuItem 
+                      onSelect={handleDelete}
+                      className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
                     <span>Delete</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
             </div>
             
             <div className="flex items-center justify-between">
