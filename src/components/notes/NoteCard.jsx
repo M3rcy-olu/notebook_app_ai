@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 const notebookColors = {
   personal: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
@@ -22,25 +23,20 @@ const notebookColors = {
 };
 
 export default function NoteCard({ note, viewMode, onDelete }) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const handleDelete = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
 
-    console.log('Delete button clicked for note:', note.id); // Debug log
-
-    // A small delay helps ensure the dropdown has time to process the click
-    // before the confirmation dialog pops up, preventing weird UI behavior.
-    await new Promise(resolve => setTimeout(resolve, 50));
-
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      try {
-        console.log('Attempting to delete note:', note.id); // Debug log
-        await onDelete(note.id);
-        console.log('Note deleted successfully'); // Debug log
-      } catch (error) {
-        console.error('Error during note deletion:', error);
-        alert('Failed to delete the note. Please try again.');
-      }
+  const confirmDelete = async () => {
+    try {
+      await onDelete(note.id);
+    } catch (error) {
+      console.error('Error during note deletion:', error);
+      alert('Failed to delete the note. Please try again.');
     }
   };
 
@@ -52,12 +48,67 @@ export default function NoteCard({ note, viewMode, onDelete }) {
     }
   };
 
-  if (viewMode === "list") {
-    return (
-      <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
-        <div className="glass-effect rounded-2xl p-4 floating-element smooth-transition group">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 light-green-bg rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+  return (
+    <>
+      {viewMode === "list" ? (
+        <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
+          <div className="glass-effect rounded-2xl p-4 floating-element smooth-transition group">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 light-green-bg rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {note.thumbnail ? (
+                  <img 
+                    src={note.thumbnail} 
+                    alt={note.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 earthy-green-gradient rounded-lg"></div>
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold truncate text-lg" style={{ color: 'var(--text-primary)' }}>{note.title}</h3>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {format(new Date(note.last_modified || note.created_date), 'MMM d, yyyy • h:mm a')}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Badge className={notebookColors[note.notebook]}>
+                  {note.notebook}
+                </Badge>
+                
+                <div data-dropdown>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-100 group-hover:opacity-100 smooth-transition"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="min-w-[120px] z-[1000]">
+                      <DropdownMenuItem 
+                        onSelect={handleDelete}
+                        className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
+      ) : (
+        <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
+          <div className="glass-effect rounded-2xl overflow-hidden floating-element smooth-transition group aspect-[3/4] flex flex-col">
+            <div className="flex-1 light-green-bg flex items-center justify-center overflow-hidden">
               {note.thumbnail ? (
                 <img 
                   src={note.thumbnail} 
@@ -65,112 +116,61 @@ export default function NoteCard({ note, viewMode, onDelete }) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 earthy-green-gradient rounded-lg"></div>
+                <div className="w-16 h-16 earthy-green-gradient rounded-2xl"></div>
               )}
             </div>
             
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate text-lg" style={{ color: 'var(--text-primary)' }}>{note.title}</h3>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                {format(new Date(note.last_modified || note.created_date), 'MMM d, yyyy • h:mm a')}
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Badge className={notebookColors[note.notebook]}>
-                {note.notebook}
-              </Badge>
-              
-              <div data-dropdown>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-100 group-hover:opacity-100 smooth-transition"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="min-w-[120px] z-[1000]">
-                    <DropdownMenuItem 
-                      onSelect={(e) => {
-                        console.log('onSelect prop called in NoteCard (list view)'); // Debug log
-                        handleDelete(e);
-                      }}
-                      className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
+            <div className="p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-semibold truncate flex-1 text-lg" style={{ color: 'var(--text-primary)' }}>{note.title}</h3>
+                <div data-dropdown>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-100 group-hover:opacity-100 smooth-transition -mt-1"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="min-w-[120px] z-[1000]">
+                      <DropdownMenuItem 
+                        onSelect={handleDelete}
+                        className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
                       <span>Delete</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {format(new Date(note.last_modified || note.created_date), 'MMM d, yyyy')}
+                </p>
+                <Badge className={notebookColors[note.notebook]}>
+                  {note.notebook}
+                </Badge>
+              </div>
             </div>
           </div>
-        </div>
-      </Link>
-    );
-  }
-  else {
-    return (
-      <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
-        <div className="glass-effect rounded-2xl overflow-hidden floating-element smooth-transition group aspect-[3/4] flex flex-col">
-          <div className="flex-1 light-green-bg flex items-center justify-center overflow-hidden">
-            {note.thumbnail ? (
-              <img 
-                src={note.thumbnail} 
-                alt={note.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 earthy-green-gradient rounded-2xl"></div>
-            )}
-          </div>
-          
-          <div className="p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold truncate flex-1 text-lg" style={{ color: 'var(--text-primary)' }}>{note.title}</h3>
-              <div data-dropdown>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-100 group-hover:opacity-100 smooth-transition -mt-1"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="min-w-[120px] z-[1000]">
-                    <DropdownMenuItem 
-                      onSelect={(e) => {
-                        console.log('onSelect prop called in NoteCard (grid view)'); // Debug log
-                        handleDelete(e);
-                      }}
-                      className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                {format(new Date(note.last_modified || note.created_date), 'MMM d, yyyy')}
-              </p>
-              <Badge className={notebookColors[note.notebook]}>
-                {note.notebook}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  }
+        </Link>
+      )}
+
+      <ConfirmationDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Note"
+        message={`Are you sure you want to delete "${note.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmVariant="danger"
+      />
+    </>
+  );
 }
