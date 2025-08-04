@@ -1,21 +1,22 @@
 1. (done) Remove extra light/dark mode toggle
 2. (done) Fix pen size
 3. (done) Fix note card layout --> add all options to the drop down
-4. Add right click on home to create new note, new notebooks, or select a note to download as a file
-5. Change pdf and google drive save to direct api calls rather than using LLM
-6. add eraser stroke functionality
+4. Fix the notecard delete, notebook creation, and note persistance in notebooks
+5. Add right click on home to create new note, new notebooks, or select a note to download as a file
+6. Change pdf and google drive save to direct api calls rather than using LLM
+7. add eraser stroke functionality
 
 Switch to ios & React Native
-7. (comeback to) Change some of the color theme to get an understanding of how to code is structured
-8. Add pdf upload to canvas and export functionality
+8. (comeback to) Change some of the color theme to get an understanding of how to code is structured
+9. Add pdf upload to canvas and export functionality
 
 Add in app AI assistance
 10. Add in app AI assistance v1 -- answers questions using knowledge in the current canvas and web search functioanlity like perplexity 
         - Can be triggered by highlighting of circling a word or image
         - Can be triggered by typing a question in the search bar
         - Can be triggered by writing out a question on the canvas and ending it with 2 question marks
-10. Add in app AI assistance v2 -- AI voice mode to converse about content in the canvas
-11. Add in app AI assistance v3 -- TA mode to write in the canvas; 
+11. Add in app AI assistance v2 -- AI voice mode to converse about content in the canvas
+12. Add in app AI assistance v3 -- TA mode to write in the canvas; 
         - active suggestions of definitions, examples, and questions; 
         - active suggestions can appear as an exclaimation point over a words or image 
         - abilty to write and walk through examples for solving problems like a TA coming over a students shoulder would

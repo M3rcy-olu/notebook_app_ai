@@ -8,21 +8,47 @@ export function DropdownMenu({ children }) {
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
-  const closeDropdown = () => setIsOpen(false);
+  const toggleDropdown = () => {
+    console.log('toggleDropdown called, current isOpen:', isOpen); // Debug log
+    setIsOpen(!isOpen);
+  };
+  const closeDropdown = () => {
+    console.log('closeDropdown called'); // Debug log
+    setIsOpen(false);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      console.log('handleClickOutside called, target:', event.target); // Debug log
+      
+      // Check if the click is on a dropdown menu item (which should not close the dropdown)
+      const isDropdownItem = event.target.closest('[role="menuitem"]');
+      if (isDropdownItem) {
+        console.log('Click is on dropdown item, not closing'); // Debug log
+        return;
+      }
+      
+      // Check if the click is within the dropdown content (portal)
+      const dropdownContent = document.querySelector('[data-dropdown-content]');
+      if (dropdownContent && dropdownContent.contains(event.target)) {
+        console.log('Click is within dropdown content, not closing'); // Debug log
+        return;
+      }
+      
+      // Check if the click is within the original dropdown container
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        console.log('Click outside detected, closing dropdown'); // Debug log
         closeDropdown();
       }
     };
 
     if (isOpen) {
+      console.log('Adding click outside listener'); // Debug log
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
+      console.log('Removing click outside listener'); // Debug log
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
@@ -47,10 +73,41 @@ export function DropdownMenu({ children }) {
 }
 
 export const DropdownMenuTrigger = React.forwardRef(({ children, isOpen, toggleDropdown, ...props }, ref) => {
+  // Check if the child is our Button component or any button element
+  const child = React.Children.only(children);
+  const isButtonChild = React.isValidElement(child) && (
+    child.type === 'button' || 
+    child.type?.displayName === 'Button' ||
+    child.type?.name === 'Button'
+  );
+  
+  if (isButtonChild) {
+    // Filter out non-DOM props that shouldn't be passed to the button element
+    const { closeDropdown, ...domProps } = props;
+    
+    // If child is a button, clone it and add our props
+    return React.cloneElement(child, {
+      ref,
+      onClick: (e) => {
+        console.log('DropdownMenuTrigger button clicked'); // Debug log
+        e.preventDefault();
+        e.stopPropagation();
+        toggleDropdown?.();
+        // Call the original onClick if it exists
+        child.props.onClick?.(e);
+      },
+      'aria-expanded': isOpen,
+      'aria-haspopup': 'true',
+      ...domProps
+    });
+  }
+  
+  // Otherwise, render as a button
   return (
     <button
       ref={ref}
       onClick={(e) => {
+        console.log('DropdownMenuTrigger regular button clicked'); // Debug log
         e.preventDefault();
         e.stopPropagation();
         toggleDropdown?.();
@@ -83,8 +140,8 @@ export function DropdownMenuContent({ children, isOpen, className = '' }) {
   const triggerRef = useRef(null);
   const contentRef = useRef(null);
 
-  // Get the trigger element from context
-  const { triggerRef: contextTriggerRef } = useContext(DropdownContext);
+  // Get the trigger element and closeDropdown from context
+  const { triggerRef: contextTriggerRef, closeDropdown } = useContext(DropdownContext);
   
   // Update position when dropdown opens or trigger position changes
   useEffect(() => {
@@ -110,11 +167,17 @@ export function DropdownMenuContent({ children, isOpen, className = '' }) {
     };
   }, [isOpen, contextTriggerRef]);
   
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('DropdownMenuContent: not rendering, isOpen is false'); // Debug log
+    return null;
+  }
+  
+  console.log('DropdownMenuContent: rendering dropdown content'); // Debug log
 
   const content = (
     <div 
       ref={contentRef}
+      data-dropdown-content
       className={`fixed z-[9999] mt-1 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden ${className}`}
       style={{
         top: `${position.top}px`,
@@ -122,16 +185,24 @@ export function DropdownMenuContent({ children, isOpen, className = '' }) {
         transform: 'translateX(-50%)',
         animation: 'fadeIn 0.15s ease-out',
       }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        console.log('DropdownMenuContent clicked'); // Debug log
+        e.stopPropagation();
+      }}
     >
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translate(-50%, -5px); }
           to { opacity: 1; transform: translate(-50%, 0); }
         }
       `}</style>
       <div className="py-1">
-        {children}
+        {React.Children.map(children, child => {
+          if (React.isValidElement(child)) {
+            return React.cloneElement(child, { closeDropdown });
+          }
+          return child;
+        })}
       </div>
     </div>
   );
@@ -140,10 +211,15 @@ export function DropdownMenuContent({ children, isOpen, className = '' }) {
 }
 
 export function DropdownMenuItem({ children, onSelect, closeDropdown, className = '' }) {
+  console.log('DropdownMenuItem rendered with onSelect:', !!onSelect, 'closeDropdown:', !!closeDropdown); // Debug log
+  
   const handleClick = (e) => {
+    console.log('DropdownMenuItem handleClick called'); // Debug log
     e.preventDefault();
     e.stopPropagation();
+    console.log('DropdownMenuItem clicked, calling onSelect'); // Debug log
     onSelect?.(e);
+    console.log('onSelect called, closing dropdown'); // Debug log
     closeDropdown?.();
   };
 
