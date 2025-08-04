@@ -226,7 +226,7 @@ export default function Notes() {
         className="flex-1 overflow-auto p-6" 
         style={{ backgroundColor: 'var(--bg-secondary)' }}
       >
-        <ContextMenu onNewNote={handleNewNote}>
+        <ContextMenu onNewNote={handleNewNote} onNewNotebook={startAddingNotebook}>
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Array(8).fill(0).map((_, i) => (
