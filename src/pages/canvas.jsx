@@ -42,9 +42,13 @@ export default function Canvas() {
   const getNotebookFromUrl = () => {
     const urlParams = new URLSearchParams(location.search);
     const notebookParam = urlParams.get('notebook');
-    // Only allow valid notebook names to prevent XSS
-    const validNotebooks = ["personal", "work", "study", "creative", "other"];
-    return notebookParam && validNotebooks.includes(notebookParam) 
+    
+    // Load available notebooks from localStorage
+    const savedNotebooks = localStorage.getItem('notability-notebooks');
+    const availableNotebooks = savedNotebooks ? JSON.parse(savedNotebooks) : ["personal", "work", "study", "creative", "other"];
+    
+    // Validate the notebook parameter against available notebooks
+    return notebookParam && availableNotebooks.includes(notebookParam) 
       ? notebookParam 
       : "personal";
   };

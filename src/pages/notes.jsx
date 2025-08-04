@@ -195,12 +195,13 @@ export default function Notes() {
           </Button>
           
           {/* New Note Button */}
-          <Link to={createPageUrl("Canvas")}>
-            <Button className="earthy-green-gradient text-white shadow-lg floating-element border-0">
-              <Plus className="w-4 h-4 mr-2" />
-              New Note
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleNewNote}
+            className="earthy-green-gradient text-white shadow-lg floating-element border-0"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Note
+          </Button>
         </div>
       </div>
 
@@ -246,12 +247,13 @@ export default function Notes() {
                   : "Create your first note and start expressing your ideas with digital ink."
                 }
               </p>
-              <Link to={createPageUrl("Canvas")}>
-                <Button className="earthy-green-gradient text-white shadow-lg floating-element">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Note
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleNewNote}
+                className="earthy-green-gradient text-white shadow-lg floating-element"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Note
+              </Button>
             </div>
           ) : (
             <div className={
