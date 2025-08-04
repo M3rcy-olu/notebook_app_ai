@@ -26,13 +26,17 @@ export default function NoteCard({ note, viewMode, onDelete }) {
     e.preventDefault();
     e.stopPropagation();
 
+    console.log('Delete button clicked for note:', note.id); // Debug log
+
     // A small delay helps ensure the dropdown has time to process the click
     // before the confirmation dialog pops up, preventing weird UI behavior.
     await new Promise(resolve => setTimeout(resolve, 50));
 
     if (window.confirm('Are you sure you want to delete this note?')) {
       try {
+        console.log('Attempting to delete note:', note.id); // Debug log
         await onDelete(note.id);
+        console.log('Note deleted successfully'); // Debug log
       } catch (error) {
         console.error('Error during note deletion:', error);
         alert('Failed to delete the note. Please try again.');
@@ -91,7 +95,10 @@ export default function NoteCard({ note, viewMode, onDelete }) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="min-w-[120px] z-[1000]">
                     <DropdownMenuItem 
-                      onSelect={handleDelete}
+                      onSelect={(e) => {
+                        console.log('onSelect prop called in NoteCard (list view)'); // Debug log
+                        handleDelete(e);
+                      }}
                       className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -139,7 +146,10 @@ export default function NoteCard({ note, viewMode, onDelete }) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="min-w-[120px] z-[1000]">
                     <DropdownMenuItem 
-                      onSelect={handleDelete}
+                      onSelect={(e) => {
+                        console.log('onSelect prop called in NoteCard (grid view)'); // Debug log
+                        handleDelete(e);
+                      }}
                       className="text-black-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
