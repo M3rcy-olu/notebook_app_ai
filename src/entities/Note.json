@@ -1,0 +1,62 @@
+{
+  "name": "Note",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the note"
+    },
+    "content": {
+      "type": "string",
+      "description": "SVG or canvas data representing the drawing"
+    },
+    "thumbnail": {
+      "type": "string",
+      "description": "Base64 encoded thumbnail image"
+    },
+    "notebook": {
+      "type": "string",
+      "description": "Notebook category",
+      "enum": [
+        "personal",
+        "work",
+        "study",
+        "creative",
+        "other"
+      ],
+      "default": "personal"
+    },
+    "last_modified": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the note was last modified"
+    },
+    "canvas_width": {
+      "type": "number",
+      "default": 1024
+    },
+    "canvas_height": {
+      "type": "number",
+      "default": 768
+    },
+    "background_pdf": {
+      "type": "string",
+      "description": "URL of uploaded PDF background"
+    },
+    "pdf_pages": {
+      "type": "array",
+      "description": "Array of PDF page image URLs",
+      "items": {
+        "type": "string"
+      }
+    },
+    "current_page": {
+      "type": "number",
+      "default": 0,
+      "description": "Current PDF page being annotated"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
