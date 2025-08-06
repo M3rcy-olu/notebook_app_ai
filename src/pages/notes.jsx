@@ -4,6 +4,10 @@ import { Note } from "@/entities/Note";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Plus, Search, Grid, List, Book, Palette, Settings, Moon, Sun, Download } from "lucide-react";
+import { DownloadOptionsDialog } from "@/components/ui/download-options-dialog";
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { noteToPdf, getPdfFilename } from "@/utils/pdfUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +26,7 @@ export default function Notes() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState(new Set());
+  const [showDownloadOptions, setShowDownloadOptions] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Initialize dark mode from localStorage or system preference
     const savedMode = localStorage.getItem('theme');
@@ -106,11 +111,96 @@ export default function Notes() {
     setSelectedNotes(new Set());
   };
 
-  const handleDownloadSelected = () => {
-    console.log('Downloading notes:', Array.from(selectedNotes));
-    // TODO: Implement actual download functionality
+  const handleDownloadClick = async () => {
+    if (selectedNotes.size === 1) {
+      // For single note, download directly as PDF
+      try {
+        const noteId = Array.from(selectedNotes)[0];
+        const note = notes.find(n => n.id === noteId);
+        if (note) {
+          const pdfBlob = await noteToPdf(note);
+          const filename = getPdfFilename(note);
+          saveAs(pdfBlob, filename);
+          
+          // Close selection mode after download
+          setSelectionMode(false);
+          setSelectedNotes(new Set());
+        }
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        // You might want to show an error toast/message here
+      }
+    } else {
+      // For multiple notes, show download options
+      setShowDownloadOptions(true);
+    }
+  };
+
+  const handleDownloadSeparate = async () => {
+    setShowDownloadOptions(false);
+    
+    // Download each note as a separate PDF
+    const selectedNotesArray = notes.filter(note => selectedNotes.has(note.id));
+    
+    for (const note of selectedNotesArray) {
+      try {
+        // Generate PDF for the note
+        const pdfBlob = await noteToPdf(note);
+        const filename = getPdfFilename(note);
+        
+        // Save the PDF
+        saveAs(pdfBlob, filename);
+        
+        // Small delay between downloads to avoid browser throttling
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        // Continue with next note even if one fails
+      }
+    }
+    
     setSelectionMode(false);
     setSelectedNotes(new Set());
+  };
+
+  const handleDownloadZip = async () => {
+    setShowDownloadOptions(false);
+    
+    const zip = new JSZip();
+    const selectedNotesArray = notes.filter(note => selectedNotes.has(note.id));
+    
+    try {
+      // Create a folder for the notes
+      const notesFolder = zip.folder('notes');
+      
+      // Add each note as a PDF to the zip
+      for (const note of selectedNotesArray) {
+        try {
+          // Generate PDF for the note
+          const pdfBlob = await noteToPdf(note);
+          const filename = getPdfFilename(note);
+          
+          // Convert Blob to ArrayBuffer for JSZip
+          const arrayBuffer = await pdfBlob.arrayBuffer();
+          notesFolder.file(filename, arrayBuffer);
+        } catch (error) {
+          console.error(`Error processing note ${note.id}:`, error);
+          // Continue with next note even if one fails
+        }
+      }
+      
+      // Generate the zip file
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, `notes_export_${new Date().toISOString().split('T')[0]}.zip`);
+      
+    } catch (error) {
+      console.error('Error creating zip file:', error);
+      // Show error to user (you might want to implement a better error handling UI)
+      alert('An error occurred while creating the zip file. Please try again.');
+    } finally {
+      setSelectionMode(false);
+      setSelectedNotes(new Set());
+    }
   };
 
   // Load notebooks from localStorage or use default ones
@@ -256,12 +346,12 @@ export default function Notes() {
                 Cancel
               </Button>
               <Button 
-                onClick={handleDownloadSelected}
+                onClick={handleDownloadClick}
                 className="earthy-green-gradient text-white shadow-lg"
                 disabled={selectedNotes.size === 0}
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download ({selectedNotes.size})
+                Download
               </Button>
             </div>
           ) : (
@@ -299,6 +389,7 @@ export default function Notes() {
         >
           <ContextMenu 
             onNewNote={handleNewNote}
+            onNewNotebook={startAddingNotebook}
             onDownloadNotes={handleDownloadNotes}
           >
             {isLoading ? (
@@ -349,8 +440,17 @@ export default function Notes() {
               </div>
             )}
           </ContextMenu>
+        </div>
       </div>
+
+      {/* Download Options Dialog */}
+      <DownloadOptionsDialog
+        isOpen={showDownloadOptions}
+        onClose={() => setShowDownloadOptions(false)}
+        onDownloadSeparate={handleDownloadSeparate}
+        onDownloadZip={handleDownloadZip}
+        selectedCount={selectedNotes.size}
+      />
     </div>
-  </div>
   );
 }
