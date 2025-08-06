@@ -27,6 +27,7 @@ export default function Notes() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState(new Set());
   const [showDownloadOptions, setShowDownloadOptions] = useState(false);
+  const [notebookToDelete, setNotebookToDelete] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Initialize dark mode from localStorage or system preference
     const savedMode = localStorage.getItem('theme');
@@ -71,6 +72,40 @@ export default function Notes() {
     } catch (error) {
       console.error("Error deleting note:", error);
       alert("Failed to delete the note. Please try again.");
+    }
+  };
+
+  const handleDeleteNotebook = (notebookId) => {
+    setNotebookToDelete(notebookId);
+  };
+
+  const confirmDeleteNotebook = async () => {
+    if (!notebookToDelete) return;
+    
+    try {
+      // First, delete all notes in the notebook
+      const notesToDelete = notes.filter(note => note.notebook === notebookToDelete);
+      await Promise.all(notesToDelete.map(note => Note.delete(note.id)));
+      
+      // Then update the notebooks list by removing the deleted notebook
+      const updatedNotebooks = notebooks.filter(notebook => notebook !== notebookToDelete);
+      
+      // Update localStorage
+      localStorage.setItem('notebooks', JSON.stringify(updatedNotebooks));
+      
+      // Reset the selected notebook if it was the one being deleted
+      if (selectedNotebook === notebookToDelete) {
+        setSelectedNotebook('all');
+      }
+      
+      // Reload notes to refresh the UI
+      await loadNotes();
+      
+    } catch (error) {
+      console.error("Error deleting notebook:", error);
+      alert("Failed to delete the notebook. Please try again.");
+    } finally {
+      setNotebookToDelete(null);
     }
   };
 
@@ -379,6 +414,7 @@ export default function Notes() {
             onNotebookNameChange={setNewNotebookName}
             onNotebookSave={handleAddNotebook}
             onNotebookCancel={cancelAddNotebook}
+            onDeleteNotebook={handleDeleteNotebook}
           />
         </div>
 
@@ -451,6 +487,46 @@ export default function Notes() {
         onDownloadZip={handleDownloadZip}
         selectedCount={selectedNotes.size}
       />
+
+      {/* Delete Notebook Confirmation Dialog */}
+      {notebookToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Notebook</h3>
+              <button
+                onClick={() => setNotebookToDelete(null)}
+                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you sure you want to delete the "{notebookToDelete}" notebook? This will also delete all notes in this notebook.
+              <br /><br />
+              <span className="font-medium text-red-600 dark:text-red-400">This action cannot be undone.</span>
+            </p>
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setNotebookToDelete(null)}
+                className="border-gray-300 dark:border-gray-600"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeleteNotebook}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete Notebook
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
