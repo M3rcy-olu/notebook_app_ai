@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Note } from "@/entities/Note";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, Search, Grid, List, Book, Palette, Settings, Moon, Sun } from "lucide-react";
+import { Plus, Search, Grid, List, Book, Palette, Settings, Moon, Sun, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,8 @@ export default function Notes() {
   const [selectedNotebook, setSelectedNotebook] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState(new Set());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Initialize dark mode from localStorage or system preference
     const savedMode = localStorage.getItem('theme');
@@ -70,6 +72,45 @@ export default function Notes() {
   const handleNewNote = () => {
     // Pass the selected notebook as a URL parameter
     navigate(createPageUrl("Canvas") + `?notebook=${selectedNotebook === 'all' ? 'personal' : selectedNotebook}`);
+  };
+
+  const handleDownloadNotes = () => {
+    setSelectionMode(true);
+  };
+
+  const handleNoteSelect = (noteId, isSelected) => {
+    setSelectedNotes(prev => {
+      const newSelection = new Set(prev);
+      if (isSelected) {
+        newSelection.add(noteId);
+      } else {
+        newSelection.delete(noteId);
+      }
+      return newSelection;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedNotes.size === filteredNotes.length) {
+      // If all are selected, deselect all
+      setSelectedNotes(new Set());
+    } else {
+      // Otherwise select all visible notes
+      const allNoteIds = new Set(filteredNotes.map(note => note.id));
+      setSelectedNotes(allNoteIds);
+    }
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedNotes(new Set());
+  };
+
+  const handleDownloadSelected = () => {
+    console.log('Downloading notes:', Array.from(selectedNotes));
+    // TODO: Implement actual download functionality
+    setSelectionMode(false);
+    setSelectedNotes(new Set());
   };
 
   // Load notebooks from localStorage or use default ones
@@ -194,14 +235,44 @@ export default function Notes() {
             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
           
-          {/* New Note Button */}
-          <Button 
-            onClick={handleNewNote}
-            className="earthy-green-gradient text-white shadow-lg floating-element border-0"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Note
-          </Button>
+          {/* Action Buttons */}
+          {selectionMode ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                {selectedNotes.size} selected
+              </span>
+              <Button 
+                variant="outline"
+                onClick={handleSelectAll}
+                className="border-gray-300 dark:border-gray-600"
+              >
+                {selectedNotes.size === filteredNotes.length ? 'Deselect All' : 'Select All'}
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleCancelSelection}
+                className="border-gray-300 dark:border-gray-600"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleDownloadSelected}
+                className="earthy-green-gradient text-white shadow-lg"
+                disabled={selectedNotes.size === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download ({selectedNotes.size})
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              onClick={handleNewNote}
+              className="earthy-green-gradient text-white shadow-lg floating-element border-0"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Note
+            </Button>
+          )}
         </div>
       </div>
 
@@ -223,55 +294,61 @@ export default function Notes() {
 
         {/* Main Content */}
         <div 
-        className="flex-1 overflow-auto p-6" 
-        style={{ backgroundColor: 'var(--bg-secondary)' }}
-      >
-        <ContextMenu onNewNote={handleNewNote} onNewNotebook={startAddingNotebook}>
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array(8).fill(0).map((_, i) => (
-                <div key={i} className="aspect-[3/4] glass-effect rounded-2xl animate-pulse" />
-              ))}
-            </div>
-          ) : filteredNotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="w-24 h-24 light-green-bg rounded-full flex items-center justify-center mb-6">
-                <Palette className="w-12 h-12" style={{ color: 'var(--primary-green)' }} />
+          className="flex-1 overflow-auto p-6" 
+          style={{ backgroundColor: 'var(--bg-secondary)' }}
+        >
+          <ContextMenu 
+            onNewNote={handleNewNote}
+            onDownloadNotes={handleDownloadNotes}
+          >
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array(8).fill(0).map((_, i) => (
+                  <div key={i} className="aspect-[3/4] glass-effect rounded-2xl animate-pulse" />
+                ))}
               </div>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                {searchTerm || selectedNotebook !== "all" ? "No notes found" : "Start creating"}
-              </h3>
-              <p className="text-center mb-6 max-w-md" style={{ color: 'var(--text-secondary)' }}>
-                {searchTerm || selectedNotebook !== "all" 
-                  ? "Try adjusting your search or filter to find what you're looking for."
-                  : "Create your first note and start expressing your ideas with digital ink."
-                }
-              </p>
-              <Button 
-                onClick={handleNewNote}
-                className="earthy-green-gradient text-white shadow-lg floating-element"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Note
-              </Button>
-            </div>
-          ) : (
-            <div className={
-              viewMode === "grid" 
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
-                : "space-y-4"
-            }>
-              {filteredNotes.map((note) => (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  viewMode={viewMode}
-                  onDelete={handleDeleteNote}
-                />
-              ))}
-            </div>
-          )}
-        </ContextMenu>
+            ) : filteredNotes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-24 h-24 light-green-bg rounded-full flex items-center justify-center mb-6">
+                  <Palette className="w-12 h-12" style={{ color: 'var(--primary-green)' }} />
+                </div>
+                <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                  {searchTerm || selectedNotebook !== "all" ? "No notes found" : "Start creating"}
+                </h3>
+                <p className="text-center mb-6 max-w-md" style={{ color: 'var(--text-secondary)' }}>
+                  {searchTerm || selectedNotebook !== "all" 
+                    ? "Try adjusting your search or filter to find what you're looking for."
+                    : "Create your first note and start expressing your ideas with digital ink."
+                  }
+                </p>
+                <Button 
+                  onClick={handleNewNote}
+                  className="earthy-green-gradient text-white shadow-lg floating-element"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Note
+                </Button>
+              </div>
+            ) : (
+              <div className={
+                viewMode === "grid" 
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+                  : "space-y-4"
+              }>
+                {filteredNotes.map((note) => (
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    viewMode={viewMode}
+                    onDelete={handleDeleteNote}
+                    isSelectable={selectionMode}
+                    isSelected={selectedNotes.has(note.id)}
+                    onSelect={handleNoteSelect}
+                  />
+                ))}
+              </div>
+            )}
+          </ContextMenu>
       </div>
     </div>
   </div>

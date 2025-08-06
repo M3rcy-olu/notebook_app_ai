@@ -5,7 +5,7 @@ import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, Copy } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Copy, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ const notebookColors = {
   other: "bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300"
 };
 
-export default function NoteCard({ note, viewMode, onDelete }) {
+export default function NoteCard({ note, viewMode, onDelete, isSelectable = false, isSelected = false, onSelect = () => {} }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDelete = async (e) => {
@@ -48,11 +48,27 @@ export default function NoteCard({ note, viewMode, onDelete }) {
     }
   };
 
+  const handleCheckboxClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(note.id, !isSelected);
+  };
+
+  const renderCheckbox = () => (
+    <div 
+      className={`absolute top-3 left-3 w-5 h-5 rounded-md border-2 flex items-center justify-center z-10 cursor-pointer transition-colors ${isSelected ? 'bg-green-500 border-green-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'}`}
+      onClick={handleCheckboxClick}
+    >
+      {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+    </div>
+  );
+
   return (
     <>
       {viewMode === "list" ? (
-        <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
-          <div className="glass-effect rounded-2xl p-4 floating-element smooth-transition group">
+        <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick} className="relative">
+          <div className="glass-effect rounded-2xl p-4 floating-element smooth-transition group relative">
+            {isSelectable && renderCheckbox()}
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 light-green-bg rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {note.thumbnail ? (
@@ -106,8 +122,9 @@ export default function NoteCard({ note, viewMode, onDelete }) {
           </div>
         </Link>
       ) : (
-        <Link to={createPageUrl("Canvas") + `?id=${note.id}`} onClick={handleCardClick}>
-          <div className="glass-effect rounded-2xl overflow-hidden floating-element smooth-transition group aspect-[3/4] flex flex-col">
+        <Link to={createPageUrl("Canvas") + `?id=${note.id}`} className="block h-full relative" onClick={handleCardClick}>
+          <div className="glass-effect rounded-2xl p-4 h-full flex flex-col floating-element smooth-transition group relative">
+            {isSelectable && renderCheckbox()}
             <div className="flex-1 light-green-bg flex items-center justify-center overflow-hidden">
               {note.thumbnail ? (
                 <img 

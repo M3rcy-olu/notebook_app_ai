@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, BookOpen, X } from 'lucide-react';
+import { Plus, BookOpen, Download, X } from 'lucide-react';
 
-export function ContextMenu({ onNewNote, onNewNotebook, children }) {
+export function ContextMenu({ onNewNote, onNewNotebook, onDownloadNotes, children }) {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const menuRef = useRef(null);
@@ -70,6 +70,18 @@ export function ContextMenu({ onNewNote, onNewNotebook, children }) {
     }
   };
 
+  const handleDownloadNotesClick = (e) => {
+    e.stopPropagation();
+    if (onDownloadNotes) {
+      onDownloadNotes();
+      setIsOpen(false);
+    } else {
+      // Fallback in case onDownloadNotes is not provided
+      alert('Download Notes clicked!');
+      setIsOpen(false);
+    }
+  };
+
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
       {children}
@@ -101,6 +113,14 @@ export function ContextMenu({ onNewNote, onNewNotebook, children }) {
               >
                 <BookOpen className="w-4 h-4" />
                 <span>New Notebook</span>
+              </button>
+              <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+              <button
+                onClick={handleDownloadNotesClick}
+                className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Notes</span>
               </button>
             </div>
         </div>
